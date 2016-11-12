@@ -10,3 +10,34 @@ Currently there are two Python scripts:
 * `compare-solvers.py` compares the performance of given solvers in a given challenge by looking at the objective values the competitors achieved. (Runtime and proof of optimality do not play a role here.) For each solver and each instance, the script computes a penalty; the worse a result in comparison to the best result, the higher the penalty. (Please see the script for the details of penalization.) In the end, the script prints the penalties in terms of their mean, standard deviation, median, and mode.
 
 The `results` folder contains the MiniZinc challenge results from 2011 to 2016; for each year, there is a JSON file. (This data was extracted from the JavaScript files used by the MiniZinc web site.) The files contain all the data except for the scores.
+
+To generate a JSON file for import into the database, proceed as follows:
+
+* Download the results from the MiniZinc web site, e.g. http://www.minizinc.org/challenge2016/results.js.
+* Append this snippet:
+
+  ```
+var fs = require('fs');
+fs.writeFile(
+    "results.json",
+    JSON.stringify(
+        {
+            "year": 2016,
+            "solvers": solvers,
+            "fd_solvers": fd_solvers,
+            "free_solvers": free_solvers,
+            "par_solvers": par_solvers,
+            "open_solvers": open_solvers,
+            "problems": problems,
+            "kind": kind,
+            "instances": instances,
+            "benchmarks": benchmarks,
+            "results": results,
+            "times": times,
+            "objectives": objectives
+        },
+        null, 2));
+  ```
+
+* Update the year.
+* Run the resulting script with `nodejs`.
