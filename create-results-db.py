@@ -26,8 +26,10 @@ def fixedSolverName(solver):
 # state -> (solved, complete)
 stateDict = {
     'SC': (True,  True),
+    'S':  (True,  False),
     'S ': (True,  False),
     'SU': (True,  False),
+    'C':  (False, True),
     ' C': (False, True),
     'UC': (False, True),
     'UU': (False, False),
@@ -35,6 +37,7 @@ stateDict = {
     'UNK': (False, False),
     'UNKNOWN': (False, False),
     'E': (False, False),
+    'ERR': (False, False),
     'ERROR Incorrect': (False, False),
     'MZN': (False, False),
     'INC': (False, False)
