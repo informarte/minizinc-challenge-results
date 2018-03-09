@@ -3,14 +3,17 @@
 # This script evaluates the performance of a given set of solvers in a given challenge.
 #
 # For each instance, the script retrieves the objective value of the best solution
-# in order to compute, for each solver, a penalty between 0 and 1 (using feature
+# in order to compute, for each given solver, a penalty between 0 and 1 (using feature
 # scaling) where 0 means the solution is one of the best and 1 means it is one of the
 # worst. (In case there is no solution, the penalty is 1.)
 #
-# In the end the script prints, for each solver, the number of instances it failed on,
+# In the end the script prints, for each given solver, the number of instances it failed on,
 # and the penalties in terms of their mean, standard deviation, and median.
 #
 # The database is expected to reside in the working directory under the name results.db.
+#
+# Notice that the result of evaluation does not depend on the given set of solvers but
+# only on the contents of the database.
 
 import argparse
 import json
@@ -19,7 +22,7 @@ import sqlite3
 import statistics
 import sys
 
-def compareSolvers(cursor, challenge, solvers, verbose):
+def evalSolvers(cursor, challenge, solvers, verbose):
     jobs = list(cursor.execute('SELECT DISTINCT result.problem, problem.kind, result.instance FROM result JOIN problem ON result.problem = problem.name WHERE result.challenge = ? ORDER BY result.problem, result.instance', (challenge,)));
     if not jobs:
         print('There are no results for challenge {}'.format(challenge), file = sys.stderr)
@@ -73,14 +76,14 @@ def postprocessResult(result):
     }
 
 def main():
-    parser = argparse.ArgumentParser(description = 'Compares the performance of the given solvers in the given challenge')
+x    parser = argparse.ArgumentParser(description = 'Evaluates the performance of the given solvers in the given challenge')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('challenges', metavar = 'challenge', nargs = 1)
     parser.add_argument('solvers', metavar = 'solver', nargs = '+')
     args = parser.parse_args()
     with sqlite3.connect("results.db") as conn:
         cursor = conn.cursor()
-        results = compareSolvers(cursor, args.challenges[0], args.solvers, args.verbose)
+        results = evalSolvers(cursor, args.challenges[0], args.solvers, args.verbose)
         if results:
             postprocessedResults = {solver: postprocessResult(results[solver]) for solver in results}
             print(json.dumps(postprocessedResults, sort_keys = True, indent = 4))
