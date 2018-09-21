@@ -41,7 +41,9 @@ def evalSolvers(cursor, challenge, solvers, verbose):
         failures[solver] = 0
     for i in range(0, len(jobs)):
         (problem, kind, instance) = jobs[i]
-        qualities = list(map(lambda result: result[1], filter(lambda result: result[0], [results[solver][i] for solver in allSolvers])))
+        qualities = list(map(lambda result: result[1], filter(lambda result: result[0] and result[1], [results[solver][i] for solver in allSolvers])))
+        print(jobs[i])
+        print(qualities)
         (low, high) = (None, None) if not qualities else (min(qualities), max(qualities))
         if verbose:
             print('-' * 80)
@@ -76,7 +78,7 @@ def postprocessResult(result):
     }
 
 def main():
-x    parser = argparse.ArgumentParser(description = 'Evaluates the performance of the given solvers in the given challenge')
+    parser = argparse.ArgumentParser(description = 'Evaluates the performance of the given solvers in the given challenge')
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('challenges', metavar = 'challenge', nargs = 1)
     parser.add_argument('solvers', metavar = 'solver', nargs = '+')
