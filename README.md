@@ -16,7 +16,7 @@ To generate a JSON file for import into the database, proceed as follows:
 * Download the results from the MiniZinc web site, e.g. http://www.minizinc.org/challenge2016/results.js.
 * Append this snippet:
 
-  ```
+```
 var fs = require('fs');
 fs.writeFile(
     "results.json",
@@ -37,7 +37,7 @@ fs.writeFile(
             "objectives": objectives
         },
         null, 2));
-  ```
+```
 
 * Update the year.
 * Run the resulting script with `nodejs`.
