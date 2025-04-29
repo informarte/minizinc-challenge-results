@@ -42,8 +42,6 @@ def evalSolvers(cursor, challenge, solvers, verbose):
     for i in range(0, len(jobs)):
         (problem, kind, instance) = jobs[i]
         qualities = list(map(lambda result: result[1], filter(lambda result: result[0] and result[1], [results[solver][i] for solver in allSolvers])))
-        print(jobs[i])
-        print(qualities)
         (low, high) = (None, None) if not qualities else (min(qualities), max(qualities))
         if verbose:
             print('-' * 80)
