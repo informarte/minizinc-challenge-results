@@ -22,17 +22,17 @@ import sqlite3
 import statistics
 import sys
 
-def evalSolvers(cursor, challenge, solvers, verbose):
-    jobs = list(cursor.execute('SELECT DISTINCT result.problem, problem.kind, result.instance FROM result JOIN problem ON result.problem = problem.name WHERE result.challenge = ? ORDER BY result.problem, result.instance', (challenge,)));
+def evalSolvers(cursor, year, solvers, verbose):
+    jobs = list(cursor.execute('SELECT DISTINCT result.problem, problem.type, result.instance FROM result JOIN problem ON result.problem = problem.name WHERE result.year = ? ORDER BY result.problem, result.instance', (year,)));
     if not jobs:
-        print('There are no results for challenge {}'.format(challenge), file = sys.stderr)
+        print('There are no results for challenge {}'.format(year), file = sys.stderr)
         return {}
-    allSolvers = list(map(lambda result: result[0], cursor.execute('SELECT DISTINCT result.solver from result WHERE result.challenge = ?', (challenge,))));
+    allSolvers = list(map(lambda result: result[0], cursor.execute('SELECT DISTINCT result.solver from result WHERE result.year = ?', (year,))));
     results = {}
     penalties = {}
     failures = {}
     for solver in allSolvers:
-        results[solver] = list(cursor.execute('SELECT solved, quality FROM result WHERE challenge = ? AND solver = ? ORDER BY problem, instance', (challenge, solver)))
+        results[solver] = list(cursor.execute('SELECT solved, objective_value FROM result WHERE year = ? AND solver = ? ORDER BY problem, instance', (year, solver)))
         if len(results[solver]) != len(jobs):
             print('Expected {} results for solver {}, but found {}'.format(len(jobs), solver, len(results[solver])), file = sys.stderr)
             return {}
@@ -40,23 +40,23 @@ def evalSolvers(cursor, challenge, solvers, verbose):
         penalties[solver] = []
         failures[solver] = 0
     for i in range(0, len(jobs)):
-        (problem, kind, instance) = jobs[i]
-        qualities = list(map(lambda result: result[1], filter(lambda result: result[0] and result[1], [results[solver][i] for solver in allSolvers])))
-        (low, high) = (None, None) if not qualities else (min(qualities), max(qualities))
+        (problem, problem_type, instance) = jobs[i]
+        objectiveValues = list(map(lambda result: result[1], filter(lambda result: result[0] and result[1], [results[solver][i] for solver in allSolvers])))
+        (minObjectiveValue, maxObjectiveValue) = (None, None) if not objectiveValues else (min(objectiveValues), max(objectiveValues))
         if verbose:
             print('-' * 80)
-            print(problem, instance, kind, low, high)
+            print(problem, problem_type, instance, minObjectiveValue, maxObjectiveValue)
         for solver in solvers:
-            (solved, quality) = results[solver][i]
+            (solved, objectiveValue) = results[solver][i]
             if solved:
-                if high == low:
+                if maxObjectiveValue == minObjectiveValue:
                     penalty = 0
-                elif kind == 'MIN':
-                    penalty = (quality - low) / (high - low)
+                elif problem_type == 'MIN':
+                    penalty = (objectiveValue - minObjectiveValue) / (maxObjectiveValue - minObjectiveValue)
                 else:
-                    penalty = 1 - ((quality - low) / (high - low))
+                    penalty = 1 - ((objectiveValue - minObjectiveValue) / (maxObjectiveValue - minObjectiveValue))
                 if verbose:
-                    print(solver, quality, penalty)
+                    print(solver, objectiveValue, penalty)
             else:
                 failures[solver] += 1
                 penalty = 1
@@ -78,12 +78,12 @@ def postprocessResult(result):
 def main():
     parser = argparse.ArgumentParser(description = 'Evaluates the performance of the given solvers in the given challenge')
     parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument('challenges', metavar = 'challenge', nargs = 1)
+    parser.add_argument('years', metavar = 'year', nargs = 1)
     parser.add_argument('solvers', metavar = 'solver', nargs = '+')
     args = parser.parse_args()
     with sqlite3.connect("results.db") as conn:
         cursor = conn.cursor()
-        results = evalSolvers(cursor, args.challenges[0], args.solvers, args.verbose)
+        results = evalSolvers(cursor, args.years[0], args.solvers, args.verbose)
         if results:
             postprocessedResults = {solver: postprocessResult(results[solver]) for solver in results}
             print(json.dumps(postprocessedResults, sort_keys = True, indent = 4))
