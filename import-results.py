@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
 # This script creates a database of results from MiniZinc challenges (results.db).
-# To import results, call the script with a list of JSON result files on the command line.
+# To import results, call the script with the year and the JSON result file on the command line.
 # When the database already exists, the given results will be added unless they are
 # already in the database.
 
@@ -43,9 +43,8 @@ stateDict = {
     'INC': (False, False)
 }
 
-def importResults(file, cursor):
-    results = json.load(file)
-    year = results['year']
+def importResults(year, file, cursor):
+    results = json.load(file)['results']
     solvers = list(map(fixedSolverName, results['solvers']))
     problems = results['problems']
     benchmarks = results['benchmarks']
@@ -70,15 +69,15 @@ def importResults(file, cursor):
 
 def main():
     parser = argparse.ArgumentParser(description = 'Puts MiniZinc challenge results into database')
-    parser.add_argument('filenames', metavar = 'json-result-file', nargs = '+')
+    parser.add_argument('year', metavar = 'year')
+    parser.add_argument('filename', metavar = 'json-result-file')
     args = parser.parse_args()
     with sqlite3.connect("results.db") as conn:
         cursor = conn.cursor()
         createDb(cursor)
         cursor.execute('PRAGMA foreign_keys = ON');
-        for filename in args.filenames:
-            with open(filename) as file:
-                importResults(file, cursor)
-                conn.commit()
+        with open(args.filename) as file:
+            importResults(args.year, file, cursor)
+            conn.commit()
 
 main()
